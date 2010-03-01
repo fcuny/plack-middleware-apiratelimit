@@ -1,27 +1,45 @@
-This is Perl module Plack::Middleware::APIRateLimit.
+NAME
+    Plack::Middleware::APIRateLimit - A Plack Middleware for API Throttling
 
-INSTALLATION
+SYNOPSIS
+      my $handler = builder {
+        enable "APIRateLimit";
+        # or
+        enable "APIRateLimit", requests_per_hour => 2, backend => "Hash";
+        # or
+        enable "APIRateLimit", requests_per_hour => 2, backend => ["Redis", {port => 6379, server => '127.0.0.1'}];
+        sub { [ '200', [ 'Content-Type' => 'text/html' ], ['hello world'] ] };
+      };
 
-Plack::Middleware::APIRateLimit installation is straightforward. If your CPAN shell is set up,
-you should just be able to do
+DESCRIPTION
+    Plack::Middleware::APIRateLimit is a Plack middleware for controlling
+    API access.
 
-    % cpan Plack::Middleware::APIRateLimit
+    Set a limit on how many requests per hour is allowed on your API. In the
+    case of a authorized request, 3 headers are added:
 
-Download it, unpack it, then build it as per the usual:
+    X-RateLimit-Limit
+      How many requests are authorized by hours
 
-    % perl Makefile.PL
-    % make && make test
+    X-RateLimit-Remaining
+      How many remaining requests
 
-Then install it:
+    X-RateLimit-Reset
+      When will the counter be reseted (in epoch)
 
-    % make install
+  VARIABLES
+    backend
+        Which backend to use. Currently only Hash and Redis are supported.
+        If no backend is specified, Hash is used by default.
 
-DOCUMENTATION
+    requests_per_hour
+        How many requests is allowed by hour.
 
-Plack::Middleware::APIRateLimit documentation is available as in POD. So you can do:
+AUTHOR
+    franck cuny <franck@linkfluence.net>
 
-    % perldoc Plack::Middleware::APIRateLimit
+SEE ALSO
+LICENSE
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
 
-to read the documentation online with your favorite pager.
-
-franck cuny
