@@ -1,6 +1,5 @@
 package Plack::Middleware::APIRateLimit;
 
-use Moose;
 use Carp;
 use Scalar::Util;
 use Plack::Util;
@@ -8,13 +7,14 @@ use DateTime;
 
 our $VERSION = '0.01';
 
-extends 'Plack::Middleware';
+use parent 'Plack::Middleware';
 
-has backend =>
-    ( is => 'rw', isa => 'Plack::Middleware::APIRateLimit::Backend', );
-has requests_per_hour =>
-    ( is => 'rw', isa => 'Int', lazy => 1, default => 60 );
-has key => ( is => 'rw', isa => 'Str', predicate => 'has_key' );
+use Plack::Util::Accessor qw(
+    backend
+    auth_key
+    requests_per_hour
+    requests_per_hour_auth
+);
 
 sub prepare_app {
     my $self = shift;
@@ -57,19 +57,24 @@ sub call {
     return $self->over_rate_limit()
         if $request_done > $self->requests_per_hour;
 
-    my $headers = $res->[1];
-    Plack::Util::header_set( $headers, 'X-RateLimit-Limit',
-        $self->requests_per_hour );
-    Plack::Util::header_set( $headers, 'X-RateLimit-Remaining',
-        ( $self->requests_per_hour - $request_done ) );
-    Plack::Util::header_set( $headers, 'X-RateLimit-Reset',
-        $self->_reset_time );
-    return $res;
+    $self->response_cb(
+        $res,
+        sub {
+            my $res     = shift;
+            my $headers = $res->[1];
+            Plack::Util::header_set( $headers, 'X-RateLimit-Limit',
+                $self->requests_per_hour );
+            Plack::Util::header_set( $headers, 'X-RateLimit-Remaining',
+                ( $self->requests_per_hour - $request_done ) );
+            Plack::Util::header_set( $headers, 'X-RateLimit-Reset',
+                $self->_reset_time );
+            return $res;
+        }
+    );
 }
 
 sub _generate_key {
     my ( $self, $env ) = @_;
-    return $self->key if $self->has_key;
     if ( $env->{REMOTE_USER} ) {
         return $env->{REMOTE_USER} . "_"
             . DateTime->now->strftime("%Y-%m-%d-%H");
@@ -81,7 +86,8 @@ sub _generate_key {
 }
 
 sub _reset_time {
-    my $reset = time + ( 60 - DateTime->now->minute ) * 60;
+    my $dt = DateTime->now;
+    3600 - (( 60 * $dt->minute ) + $dt->second);
 }
 
 sub over_rate_limit {
@@ -130,7 +136,7 @@ How many requests are authorized by hours
 
 =item B<X-RateLimit-Remaining>
 
-How many remaining requests 
+How many remaining requests
 
 =item B<X-RateLimit-Reset>
 
