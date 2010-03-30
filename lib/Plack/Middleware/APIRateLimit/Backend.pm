@@ -11,4 +11,8 @@ sub get {
     confess "Backend must implement a get method";
 }
 
+sub set {
+    confess "Backend must implement a set method";
+}
+
 1;

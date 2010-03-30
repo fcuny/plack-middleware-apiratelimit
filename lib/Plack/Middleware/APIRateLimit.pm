@@ -1,5 +1,8 @@
 package Plack::Middleware::APIRateLimit;
 
+use strict;
+use warnings;
+
 use Carp;
 use Scalar::Util;
 use Plack::Util;
@@ -53,6 +56,11 @@ sub call {
 
     $self->backend->incr($key);
     my $request_done = $self->backend->get($key);
+
+    if (!$request_done) {
+        $self->backend->set($key, 1);
+        $request_done = 1;
+    }
 
     return $self->over_rate_limit()
         if $request_done > $self->requests_per_hour;
@@ -117,6 +125,9 @@ Plack::Middleware::APIRateLimit - A Plack Middleware for API Throttling
     enable "APIRateLimit", requests_per_hour => 2, backend => "Hash";
     # or
     enable "APIRateLimit", requests_per_hour => 2, backend => ["Redis", {port => 6379, server => '127.0.0.1'}];
+    # or
+    enable "APIRateLimit", request_per_hour => 2, backend => Redis->new(server => '127.0.0.1:6379');
+
     sub { [ '200', [ 'Content-Type' => 'text/html' ], ['hello world'] ] };
   };
 
@@ -151,7 +162,8 @@ When will the counter be reseted (in epoch)
 =item B<backend>
 
 Which backend to use. Currently only Hash and Redis are supported. If no
-backend is specified, Hash is used by default.
+backend is specified, Hash is used by default. Backend must implement B<set>,
+B<get> and B<incr>.
 
 =item B<requests_per_hour>
 
