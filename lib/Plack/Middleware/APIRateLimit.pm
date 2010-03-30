@@ -173,7 +173,7 @@ How many requests is allowed by hour.
 
 =head1 AUTHOR
 
-franck cuny E<lt>franck@linkfluence.netE<gt>
+franck cuny E<lt>franck@lumberjaph.netE<gt>
 
 =head1 SEE ALSO
 
