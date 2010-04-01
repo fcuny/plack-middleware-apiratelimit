@@ -115,7 +115,8 @@ __END__
 
 =head1 NAME
 
-Plack::Middleware::APIRateLimit - A Plack Middleware for API Throttling
+Plack::Middleware::APIRateLimit - DEPRECATED, see
+http://github.com/franckcuny/plack--middleware--throttle
 
 =head1 SYNOPSIS
 
